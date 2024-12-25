@@ -1,4 +1,4 @@
-function wrapBoth(bothStart, bothEnd) {
+function wrapBoth() {
     let activeCount = 0;
     let finishedCount = 0;
     
@@ -18,16 +18,21 @@ function wrapBoth(bothStart, bothEnd) {
         }
     }
 
+    function bothStart() {
+        console.log('Both started!');
+    }
+    
+    function bothEnd() {
+        console.log('Both ended!');
+    }
+
     // 包装 playMusic 和 playAnimation
     return function() {
-        startTracking();
-        playMusic(() => {
+        playMusic(startTracking, () => {
             console.log('Music finished');
             endTracking();
         });
-
-        startTracking();
-        playAnimation(() => {
+        playAnimation(startTracking, () => {
             console.log('Animation finished');
             endTracking();
         });
@@ -35,24 +40,18 @@ function wrapBoth(bothStart, bothEnd) {
 }
 
 // 示例函数实现
-function playMusic(callback) {
+function playMusic(startCallback, endCallback) {
+    startCallback();
     console.log('Music started');
-    setTimeout(callback, 1000); // 模拟异步操作
+    setTimeout(endCallback, 1000); // 模拟异步操作
 }
 
-function playAnimation(callback) {
+function playAnimation(startCallback, endCallback) {
+    startCallback();
     console.log('Animation started');
-    setTimeout(callback, 2000); // 模拟异步操作
-}
-
-function bothStart() {
-    console.log('Both started!');
-}
-
-function bothEnd() {
-    console.log('Both ended!');
+    setTimeout(endCallback, 2000); // 模拟异步操作
 }
 
 // 使用示例
-const startBoth = wrapBoth(bothStart, bothEnd);
+const startBoth = wrapBoth();
 startBoth();
