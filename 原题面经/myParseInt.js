@@ -92,11 +92,18 @@ function extractFirstNumberFromString(str) {
 }
 
 // 测试用例
-console.log(myParseInt2("xxxx123xxx780")); // 输出: 123
-console.log(myParseInt2("abc def ghi"));   // 输出: 0
-console.log(myParseInt2("    456abc"));    // 输出: 456
-console.log(myParseInt2("abc789def123"));  // 输出: 789
-console.log(myParseInt2("    "));          // 输出: 0
-console.log(myParseInt2("abc123"));        // 输出: 123
-console.log(myParseInt2("456abc123"));     // 输出: 456
+// console.log(myParseInt2("xxxx123xxx780")); // 输出: 123
+// console.log(myParseInt2("abc def ghi"));   // 输出: 0
+// console.log(myParseInt2("    456abc"));    // 输出: 456
+// console.log(myParseInt2("abc789def123"));  // 输出: 789
+// console.log(myParseInt2("    "));          // 输出: 0
+// console.log(myParseInt2("abc123"));        // 输出: 123
+// console.log(myParseInt2("456abc123"));     // 输出: 456
 
+console.log(extractFirstNumberFromString("xxxx123xxx780")); // 输出: 123
+console.log(extractFirstNumberFromString("abc def ghi"));   // 输出: 0
+console.log(extractFirstNumberFromString("    456abc"));    // 输出: 456
+console.log(extractFirstNumberFromString("abc789def123"));  // 输出: 789
+console.log(extractFirstNumberFromString("    "));          // 输出: 0
+console.log(extractFirstNumberFromString("abc123"));        // 输出: 123
+console.log(extractFirstNumberFromString("456abc123"));     // 输出: 456
