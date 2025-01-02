@@ -49,23 +49,23 @@ function throttle(func, wait) {
 }
 
 // Test case
-let i = 0;
+let j = 0;
 function increment() {
-  i++;
+  j++;
 }
 const throttledIncrement = throttle(increment, 100);
 
-// t = 0: Call throttledIncrement(). i is now 1.
-throttledIncrement(); // i = 1
+// t = 0: Call throttledIncrement(). j is now 1.
+throttledIncrement(); // j = 1
 
 // t = 50: Call throttledIncrement() again.
-//  i is still 1 because 100ms have not passed.
-throttledIncrement(); // i = 1
+//  j is still 1 because 100ms have not passed.
+throttledIncrement(); // j = 1
 
-// t = 101: Call throttledIncrement() again. i is now 2.
-//  i can be incremented because it has been more than 100ms
+// t = 101: Call throttledIncrement() again. j is now 2.
+// j can be incremented because it has been more than 100ms
 //  since the last throttledIncrement() call at t = 0.
-throttledIncrement(); // i = 2
+throttledIncrement(); //j = 2
 
 
 
@@ -177,15 +177,15 @@ const p2 = new Promise((resolve, reject) => {
 await promiseAll([p0, p1, p2]); // [3, 42, 'foo']
 
 // Rejection example.
-const p0 = Promise.resolve(30);
-const p1 = new Promise((resolve, reject) => {
+const p3 = Promise.resolve(30);
+const p4 = new Promise((resolve, reject) => {
   setTimeout(() => {
     reject('An error occurred!');
   }, 100);
 });
 
 try {
-  await promiseAll([p0, p1]);
+  await promiseAll([p3, p4]);
 } catch (err) {
   console.log(err); // 'An error occurred!'
 }
@@ -340,26 +340,26 @@ class EventEmitter {
 }
 
 // Test case:
-const emitter = new EventEmitter();
+const emitter1 = new EventEmitter();
 
 function addTwoNumbers(a, b) {
   console.log(`The sum is ${a + b}`);
 }
 
 // Returns a subscription object that has an .off() method.
-const sub = emitter.on('foo', addTwoNumbers);
-emitter.emit('foo', 2, 5);
+const sub = emitter1.on('foo', addTwoNumbers);
+emitter1.emit('foo', 2, 5);
 // > "The sum is 7"
 
-emitter.on('foo', (a, b) => {
+emitter1.on('foo', (a, b) => {
   console.log(`The product is ${a * b}`);
 });
-emitter.emit('foo', 4, 5);
+emitter1.emit('foo', 4, 5);
 // > "The sum is 9"
 // > "The product is 20"
 
 sub.off(); // This unsubscribes the callback that logs the sum of the numbers.
-emitter.emit('foo', -3, 9);
+emitter1.emit('foo', -3, 9);
 // > "The product is -27"
 // (Only the multiply callback is triggered, the first one was unsubscribed.)
 
@@ -676,7 +676,7 @@ function isPrimitiveTypeOrFunction(value) {
 }
 
 // Test case:
-const obj1 = {
+const obj11 = {
     num: 0,
     str: '',
     boolean: true,
@@ -689,19 +689,52 @@ const obj1 = {
     [Symbol('s')]: 'baz',
   };
   
-  const clonedObj1 = deepClone(obj1);
+  const clonedObj1 = deepClone(obj11);
   clonedObj1.arr.push(3);
   obj1.arr; // Should still be [0, 1, 2]
   
   const obj2 = { a: {} };
   obj2.a.b = obj2; // Circular reference
   
-  const clonedObj2 = deepClone(obj2); // Should not cause a stack overflow by recursing into an infinite loop.
+  const clonedObj12 = deepClone(obj12); // Should not cause a stack overflow by recursing into an infinite loop.
   
   clonedObj2.a.b = 'something new';
   
   obj2.a.b === obj2; // This should still be true
-  
+
+
+
+
+// 并发任务控制
+function paralleTask(tasks, parallelCount) {
+  return new Promise(resolve => {
+    if (tasks.length === 0) {
+      resolve([]);
+      return;
+    }
+    let nextIndex = 0;
+    let finishCount = 0;
+    // 如果需要返回一个result数组的话 const result = [];
+    function _request() {
+      const task = tasks[nextIndex];
+      // const i = nextIndex;
+      nextIndex++;
+      task().then(() => {
+        //result[i] = data....
+        finishCount++;
+        if (nextIndex < tasks.length) {
+          _request();
+        } else if (finishCount === tasks.length) {
+          resolve();
+          //resolve(result);
+        }
+      })
+    }
+    for (let i = 0; i < Math.min(tasks.length, parallelCount); i++) {
+      _request();
+    }
+  });
+}
 
 // 场景题
 function wrapBoth() {
