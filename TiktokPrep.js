@@ -269,7 +269,7 @@ function serializeHTML(element, indent = '\t') {
             `${indent.repeat(depth)}<${element.tag.toLowerCase()}>`,
             ...content,
             `${indent.repeat(depth)}</${element.tag.toLowerCase()}>`
-        ].join('\n');
+        ].join('\n'); //不要忘记转换成字符串
     }
     return traverse(element, 0);
 }
@@ -562,6 +562,7 @@ console.log(newFn(3, 4));
 function myMap(callBackFn, thisArg) {
     const len = this.len;
     const array = new Array(length);
+     // 检查空位
     for (let k = 0; k < len; k++) {
         if (Object.hasOwn(this, k)) {
             //map也可以传入两个参数 一个是callBack 一个是callbak里this的指向
@@ -570,7 +571,7 @@ function myMap(callBackFn, thisArg) {
         }
     }
     return array;
-  }
+}
 
 
 // reduce

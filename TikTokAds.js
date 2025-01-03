@@ -366,4 +366,81 @@ function replaceWords(dictionary, sentence) {
     return result.join(' ');
 }
 
+// Leetcode: 139 （不熟练） DFS + backtracking
+// destructure: 看到这题 可能首先会想到string方面的操作 同时包含了prefix等提示词在内 我们可能会想到用trie 但是用trie的话 感觉要一个sub array一个sub array遍历
+// 感觉时间复杂度不是特别匹配 如何能快速知道一段单词是否出现wordDic中？ HashSet?+ 回溯？
+function wordBreak(s, wordDict) {
+    const n = s.length;
+    const wordSet = new Set(wordDict);
+    const memo = Array(n);
 
+    const canBreak = (start) => {
+        // 说明这个s已经测过了 现在指针在n
+        if (start === n) {
+            return true;
+        }
+        // 认为一般是后半部的memo先填完 然后第一圈遍历到后面部分的时候就知道行不行了
+        if (memo[start] !== undefined) {
+            return memo[start];
+        }
+        for (let i = start + 1; i <= n; i++) {
+            //因为slice是左闭又开 所以包含n才能包含最后一个字符
+            const prefix = s.slice(start, i);
+            // 如果说当前sub string在set中 且之后substring也能顺利包含的话 return true （剪枝）
+            if (wordSet.has(prefix) && canBreak(i)) {
+                return true;
+                // 说明当前start的这个位置是能分割的
+                memo[start] = true;
+            }
+        }
+        memo[start] = false;
+        return false;
+    }
+    return canBreak(0);
+}
+
+
+// leetcode 15: 3sum -> two pointer -> three pointer
+// 必须会 ！ destructure： 大概思路就是找到三个数和为0的组合 那么外圈是i 两个指针是left = i + 1， right = nums.length - 1 慢慢向中间聚拢 找到答案
+// 实现三指针重要的基础 就是sort 数组从小到大 才能正确的找答案
+
+function threeSum(nums) {
+    nums.sort((a, b) => a - b);
+    const result = [];
+    for (let i = 0; i < nums.length; i++) {
+        // 剪枝 因为i 都大于0了 比不可能组成== 0的组合了
+        if (nums[i] > 0) {
+            break;
+        }
+        // 剪枝 + 去重
+        if (i > 0 && nums[i] === nums[i - 1]) {
+            continue;
+        }
+        let left = i + 1;
+        let right = nums.length - 1;
+
+        while (left < right) {
+            const sum = nums[i] + nums[left] + nums[right];
+            if (sum > 0) {
+                right--;
+            } else if (sum < 0) {
+                left++;
+            } else {
+                result.push([nums[i], nums[left], nums[right]]);
+                //去重
+                while (left < right && nums[right] === nums[right - 1]) {
+                    right--;
+                }
+                // 去重
+                while (left < right && nums[left] === nums[left + 1]) {
+                    left++;
+                }
+                // 像中间聚拢 查找下一组合适的答案
+                left++;
+                right--;
+            }
+        }
+    }
+    return result;
+}
+// TC O(n^2) SC： O（n) 优化 2 set + map
