@@ -610,12 +610,15 @@ function mySqure() {
  * @return {T}
  */
 
-function isPrimitiveTypeOrFunction(value) {
+  function isPrimitiveTypeOrFunction(value) {
     return typeof value !== 'object' || typeof value === 'function' || value === null;
   }
   
   function getType(value) {
     const type = typeof value;
+    if (type !== 'object') {
+      return type;
+    }
     return Object.prototype.toString.call(value).replace(/^\[object (\S+)\]$/, '$1').toLowerCase();
   }
   
@@ -709,7 +712,7 @@ const obj11 = {
 function paralleTask(tasks, parallelCount) {
   return new Promise(resolve => {
     if (tasks.length === 0) {
-      resolve([]);
+      resolve();
       return;
     }
     let nextIndex = 0;

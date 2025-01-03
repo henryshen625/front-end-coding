@@ -239,3 +239,131 @@ function canCompleteCircuit(gas, cost) {
 }
 
 //https://www.bilibili.com/video/BV1jA411r7WX?spm_id_from=333.788.videopod.sections&vd_source=f0204c636c2689ae89f76e34182b5139
+
+// Leetcode 200: 岛屿问题 dfs ->图 
+// 背
+
+function numIslands(grid) {
+    if (grid.length === 0) {
+        return 0;
+    }
+    const row = grid.length;
+    const column = grid[0].length;
+    let result = 0;
+
+    const dfs = (i, j) => {
+        if (i < 0 || i >= row || j < 0 || j >= column) {
+            return;
+        }
+        // 注意input给的1 0格式是什么
+        if (grid[i][j] === '0') {
+            return;
+        }
+        grid[i][j] = '0';
+        dfs(i, j + 1);
+        dfs(i, j - 1);
+        dfs(i - 1, j);
+        dfs(i + 1, j);
+    }
+    for (let i = 0; i < row; i++) {
+        for (let j = 0; j < column; j++) {
+            if (grid[i][j] === '1') {
+                dfs(i, j);
+                result++;
+            }
+        }
+    }
+    return result;
+}
+// leetcode 1071: 两个字符串的最大公因数
+// 最土味的做法 就是枚举
+
+function gcdOfStrings(str1, str2) {
+    function check(sub, str) {
+        const lenX = Math.floor(str / sub);
+        return sub.repeat(lenX) === str;
+    }
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    for (let i = Math.min(len1, len2); i >= 1 ; i--) {
+        if (len1 % i === 0 && len2 % i === 0) {
+            const sub = str1.substring(0, i);
+            if (check(sub, str1) && check(sub, str2)) {
+                return sub;
+            }
+        }
+    }
+    return '';
+}
+// TC: O(n *(m + n)) SC: O(n)
+// 数学公式：
+var gcdOfStrings = function(str1, str2) {
+    function gcd(a, b) {
+        return b === 0 ? a : gcd(b, a % b);
+    }
+
+    const len1 = str1.length;
+    const len2 = str2.length;
+    const gcdLen = gcd(len1, len2); // 找到最大公约数长度
+
+    const candidate = str1.substring(0, gcdLen); // 截取候选的 GCD 字符串
+    if (str1 === candidate.repeat(len1 / gcdLen) && str2 === candidate.repeat(len2 / gcdLen)) {
+        return candidate;
+    }
+
+    return '';
+};
+
+// Leetcode 648: String + Trie
+// destructure: 词根->衍生词 ->前缀 可以联想到Trie 且每个词我们需要返回最短的词根
+// 那么在trie中 我们每个词根结束的时候 需要进行标记 让每词搜索的时候检查是否为end 如果是就返回 不是则进行下一层搜索
+
+class Trie {
+    constructor() {
+        this.children = {};
+        this.isEnd = false;
+    }
+    insert(word) {
+        let node = this;
+        for (const char of word) {
+            if (!node.children[char]) {
+                node.children[char] = new Trie();
+            }
+            node = node.children[char];
+        }
+        node.isEnd = true;
+        return;
+    }
+
+    search(word) {
+        let temp = '';
+        let node = this;
+        for (const char of word) {
+            if (!node.children[char]) {
+                return;
+            }
+            temp += char;
+            if (node.children[char].isEnd) {
+                return temp;
+            }
+            node = node.children[char];
+        }
+        return;
+    }
+}
+function replaceWords(dictionary, sentence) {
+    const tree = new Trie();
+    for (const word of dictionary) {
+        tree.insert(word);
+    }
+    const sentenceList = sentence.split(' ');
+    const result = [];
+    for (const word of sentenceList) {
+        const checkedWord = tree.search(word) || word;
+        result.push(checkedWord);
+    }
+    return result.join(' ');
+}
+
+
