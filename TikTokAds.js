@@ -444,3 +444,168 @@ function threeSum(nums) {
     return result;
 }
 // TC O(n^2) SC： O（n) 优化 2 set + map
+
+
+// Leetcode 1011: Binary Search
+// Destructure: 我们从题目中能得知 题目想我们从一段区间内寻找一个最小值capacity 能满足days ->在有序区间内寻找最小值 ->二分 有点像猩猩吃香蕉
+// 本题需要注意的点： left 和 right 的取值要合理 left要取weight中最大值 因为要至少满足当天能够ship  right是sum(weights)
+function shipWithinDays(weights, days) {
+    const checkCapacity = capacity => {
+        let totalDays = 1;
+        let currWeight = 0;
+        for (let i = 0; i < weights.length; i++) {
+            if (currWeight + weights[i] > capacity) {
+                currWeight = 0;
+                totalDays += 1;
+            }
+            if (totalDays > days) {
+                return false;
+            }
+            currWeight += weights[i];
+        }
+        return true;
+    }
+    let left = Math.max(...weights);
+    let right = weights.reduce((acc, curr) => acc + curr, 0);
+
+    while (left <= right) {
+        const mid = left + Math.floor((right - left) / 2);
+        if (checkCapacity(mid)) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+// TC: O(N*Log(Sum(Weights))) SC: O(1)
+
+// Leetcode 1091: Graph + BFS
+// Destructure: 查找0， 0 到 n - 1, n - 1的最短路径 包含障碍 且 可以把个方向 只需要添加进队列的条件 和多四个direction
+function shortestPathBinaryMatrix(grid) {
+    const n = grid.length - 1;
+    // 如果起始点和终点任意一点为1 说明不可能到达
+    if (grid[0][0] === 1 || grid[n][n] === 1) return -1;
+    const direction = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [-1, -1], [1, -1]];
+    const queue = [];
+    const path = new Set();
+    queue.push([0, 0, 1]);
+    path.add('0,0');
+
+    while (queue.length !== 0) {
+        const [row, col, step] = queue.shift();
+        if (row === n && col === n) {
+            return step;
+        }
+        for (const [x, y] of direction) {
+            const newX = x + row;
+            const newY = y + col;
+            if (newX >= 0 && newX <= n && newY >= 0 && newY <= n && grid[newX][newY] === 0) {
+                if (!path.has(`${newX},${newY}`)) {
+                    queue.push([newX, newY, step + 1]);
+                    path.add(`${newX},${newY}`);
+                }
+            }
+        }
+    }
+    return -1;
+}
+// TC: O(N) SC: O(N)
+
+
+// Leetcode 1209
+// Destructure: 可以连为对对碰 然后看到后面的元素可以消除前面的元素  就可以联想到stack 需要注意的一点 我们还需要一个辅助stack去帮我们记录前一个
+// 不同字母的个数 这样我们才知道当我们消除一串数字之后 前一个数字连续的数量 
+function removeDuplicates(s, k) {
+    const stack = [];
+    const counter = [];
+    for (let i = 0; i < s.length; i++) {
+        if (stack.length === 0 || stack[stack.length - 1] !== s[i]) {
+            stack.push(i);
+            counter.push(1);
+        } else if (stack[stack.length - 1] === s[i]) {
+            counter[counter.length - 1] += 1;
+            stack.push(s[i]);
+            if (counter[counter.length - 1 === k]) {
+                let count = k;
+                while (count > 0) {
+                    stack.pop();
+                    count--;
+                }
+                counter.pop();
+            }
+        }
+    }
+    return stack.join('');
+}
+// TC: O(n) SC: O(n)
+
+// leetcode 695 Graph + dfs 
+// Destructure: 最大岛屿 当碰见1时进行dfs 然后遍历四个方向传回的值，记得加当前岛屿面积为1
+function maxAreaOfIsland(grid) {
+    const m = grid.length;
+    const n = grid[0].length;
+
+    const dfs = (i, j) => {
+        if (i < 0 || i >= m || j < 0 || j >= n) {
+            return 0;
+        }
+        if (grid[i][j] === 0) {
+            return 0;
+        }
+        grid[i][j] = 0;
+        return 1 + dfs(i, j + 1) + dfs(i, j - 1) + dfs(i - 1, j) + dfs(i + 1, j);
+    }
+    let result = 0;
+    for (let i = 0; i < m; i++) {
+        for (let j = 0; j < n; j++) {
+            if (grid[i][j] === 1) {
+                result = Math.max(result, dfs(i, j));
+            }
+        }
+    }
+    return result;
+}
+// TC: O(m * n) SC: O(m * n)
+
+// Leetcode 2402: Heap + sort
+// Destructure: 这道题我认为最优解应该是两个heap 一个管理空闲meeting room 一个管理使用中的meeting room
+// 用堆的理由：如果空闲heap不为空 我可以每次从heap中pop出index最小的meeting room 如果heap不为空 那我们从使用中heap pop出最早结束的meeting room进行操作
+// 但是碍于js没有原生heap 我们暂时使用每次循环 来查找空闲meeting room或者最早结束meeting room
+function mostBooked(n, meetings) {
+    const idle = Array(n).fill(-1);
+    const counter = Array(n).fill(0);
+    meetings.sort((a, b) => a[0] - b[0]);
+
+    for (const meeting of meetings) {
+        const [start, end] = meeting;
+        let isAvaliable = false;
+        // earliestRoom初始值不重要
+        let earliestRoom = 0;
+        let earliestEnd = Infinity;
+        for (let i = 0; i < n; i++) {
+            // 如果有空会议室的话： 直接使用 更新end 把flag设置成true
+            // 注意 有空闲的话 选择最小的 所以从0开始向后遍历 有的话 直接break
+            if (idle[i] <= start) {
+                isAvaliable = true;
+                idle[i] = end;
+                counter[i] += 1;
+                break;
+            }
+            // 如果没有空会议室 寻找最早结束的会议室
+            if (idle[i] < earliestEnd) {
+                earliestEnd = idle[i];
+                earliestRoom = i;
+            }
+        }
+        // 在没有空会议室的前提下： 更新当前会议室的end time->等于说再上一个会议的基础上 我直接把当前的会议时长（ end - start）合并进去
+        if (!isAvaliable) {
+            idle[earliestRoom] += end - start;
+            counter[earliestRoom] += 1;
+        }
+    }
+    return counter.indexOf(Math.max(...counter));
+}
+
+// leetcode 301: backtracking + bfs? + stack
+
