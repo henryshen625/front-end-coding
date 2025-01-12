@@ -4,6 +4,8 @@ function debounce(func, wait = 0) {
     return function(...args) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
+          // Has the same `this` as the outer function's
+        // as it's within an arrow function.
             timeoutId = null;
             func.apply(this, args);
         }, wait);
@@ -42,6 +44,8 @@ function throttle(func, wait) {
         }
         throttling = true;
         setTimeout(() => {
+        // Has the same `this` as the outer function's
+        // as it's within an arrow function.
             throttling = false;
         }, wait);
         func.apply(this, args);
@@ -740,6 +744,32 @@ function paralleTask(tasks, parallelCount) {
   });
 }
 
+function flattenArray(array, level = 1) {
+  let result = [];
+  
+  for (let i = 0; i < array.length; i++) {
+    const item = array[i];
+    if (Array.isArray(item) && level > 0) {
+      // Recursively flatten if the item is an array and we still have levels to flatten
+      result = result.concat(flattenArray(item, level - 1));
+    } else {
+      // Add the item to the result
+      result.push(item);
+    }
+  }
+  
+  return result;
+}
+
+// Example usage:
+const nestedArray = [1, [2, [3, [4, 5]]], 6];
+
+console.log(flattenArray(nestedArray, 1)); // [1, 2, [3, [4, 5]], 6]
+console.log(flattenArray(nestedArray, 2)); // [1, 2, 3, [4, 5], 6]
+console.log(flattenArray(nestedArray, 3)); // [1, 2, 3, 4, 5, 6]
+console.log(flattenArray(nestedArray, 0)); // [1, [2, [3, [4, 5]]], 6]
+
+
 // 场景题
 function wrapBoth() {
     let activeCount = 0;
@@ -803,3 +833,189 @@ startBoth();
 
 
  
+function useTimeout(callback, delay) {
+  const memorizeCallback = useRef();
+
+  useEffect(() => {
+    memorizeCallback.current = callback;
+  }, [callback]);
+  // memorizeCallback.current 的初始值会是 callback，但之后不会随着 callback 的更新而改变，除非手动更新它。
+  useEffect(() => {
+    if (delay !== null) {
+      const timer = setTimeout(() => {
+        memorizeCallback.current();
+      }, delay);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [delay]);
+};
+  // callback 回调函数， delay 延迟时间
+  useTimeout(callback, delay);
+
+  import { useState, useEffect } from "react";
+
+  /**
+   * Custom Hook: useDebounce
+   * @param {any} value - The value to debounce.
+   * @param {number} delay - The debounce delay in milliseconds.
+   * @returns {any} - The debounced value.
+   */
+export default function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    // Set a timeout to update the debounced value
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    // Cleanup function to clear the timeout if value or delay changes
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]); // Re-run effect if value or delay changes
+
+  return debouncedValue;
+}
+
+import React, { useState } from "react";
+import useDebounce from "./useDebounce";
+
+export default function SearchComponent() {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 500); // Debounce the query with a delay of 500ms
+
+  useEffect(() => {
+    if (debouncedQuery) {
+      // Perform API call or expensive operation with debouncedQuery
+      console.log("Performing search for:", debouncedQuery);
+    }
+  }, [debouncedQuery]); // Trigger effect when debounced value changes
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+    </div>
+  );
+}
+
+import { useRef, useEffect } from "react";
+
+/**
+ * Custom Hook: usePrevious
+ * @param {any} value - The value whose previous value you want to store.
+ * @returns {any} - The previous value.
+ */
+export default function usePrevious(value) {
+  const ref = useRef();
+
+  useEffect(() => {
+    ref.current = value; // Update ref to the current value on every render
+  }, [value]); // Trigger effect whenever the value changes
+
+  return ref.current; // Return the previous value (before the most recent render)
+}
+// 因为useEffect是在组件渲染后执行 所以每次return老的值 再更新的值
+
+import React, { useState } from "react";
+import useDebounce from "./useDebounce";
+
+export default function SearchComponent() {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 500); // Debounce the query with a delay of 500ms
+
+  useEffect(() => {
+    if (debouncedQuery) {
+      // Perform API call or expensive operation with debouncedQuery
+      console.log("Performing search for:", debouncedQuery);
+    }
+  }, [debouncedQuery]); // Trigger effect when debounced value changes
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+    </div>
+  );
+}
+  
+
+function sanitizeVersion(version) {
+  let sanitized = "";
+  for (let char of version) {
+      if ((char >= '0' && char <= '9') || char === '.') {
+          sanitized += char;
+      }
+  }
+  return sanitized;
+}
+
+function compareVersions(a, b) {
+  const sanitizeA = sanitizeVersion(a);
+  const sanitizeB = sanitizeVersion(b);
+
+  const partsA = sanitizeA.split('.').map(Number);
+  const partsB = sanitizeB.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+      const numA = partsA[i] || 0;
+      const numB = partsB[i] || 0;
+
+      if (numA > numB) return 1;
+      if (numA < numB) return -1;
+  }
+
+  return 0;
+}
+
+const versions = ["1.21.0", "1.2.1", "1.2.0", "1.1.1", "1.1.0", "1.0.1", "1.0.0", "1.invalid.0"];
+const sortedVersions = versions.sort(compareVersions);
+
+console.log(sortedVersions);
+// Output: ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", "1.2.1", "1.21.0", "1.0.0"]
+
+
+
+// 管道函数
+function pipe(initial, ...funcs) {
+  return funcs.reduce((acc, fn) => fn(acc), initial);
+} 
+const add2 = (x) => x+2
+const mul2 = (x) => x*2
+pipe(x, [add2, mul2]) // (x+2) * 2
+
+function asyncPipe(initial, ...funcs) {
+  return funcs.reduce((acc, fn) => {
+    return acc.then(fn);
+  }, Promise.resolve(initial));
+}
+const addOne = async (num) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(num + 1), 100);
+  });
+};
+
+const multiplyByTwo = async (num) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(num * 2), 100);
+  });
+};
+
+const subtractThree = async (num) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(num - 3), 100);
+  });
+};
+const result = await asyncPipe(5, addOne, multiplyByTwo, subtractThree);
+console.log(result); 
