@@ -569,7 +569,7 @@ function maxAreaOfIsland(grid) {
 // TC: O(m * n) SC: O(m * n)
 
 // Leetcode 2402: Heap + sort
-// Destructure: 这道题我认为最优解应该是两个heap 一个管理空闲meeting room 一个管理使用中的meeting room
+// Destructure: 这道题最优解应该是两个heap 一个管理空闲meeting room 一个管理使用中的meeting room
 // 用堆的理由：如果空闲heap不为空 我可以每次从heap中pop出index最小的meeting room 如果heap不为空 那我们从使用中heap pop出最早结束的meeting room进行操作
 // 但是碍于js没有原生heap 我们暂时使用每次循环 来查找空闲meeting room或者最早结束meeting room
 function mostBooked(n, meetings) {
@@ -584,7 +584,7 @@ function mostBooked(n, meetings) {
         let earliestRoom = 0;
         let earliestEnd = Infinity;
         for (let i = 0; i < n; i++) {
-            // 如果有空会议室的话： 直接使用 更新end 把flag设置成true
+            // 如果有空会议室的话： 直接使用 1.更新end 2.把flag设置成true 3. 更新counter
             // 注意 有空闲的话 选择最小的 所以从0开始向后遍历 有的话 直接break
             if (idle[i] <= start) {
                 isAvaliable = true;
@@ -592,7 +592,7 @@ function mostBooked(n, meetings) {
                 counter[i] += 1;
                 break;
             }
-            // 如果没有空会议室 寻找最早结束的会议室
+            // 如果没有空会议室 寻找最早结束的会议室 更新最早的会议室和
             if (idle[i] < earliestEnd) {
                 earliestEnd = idle[i];
                 earliestRoom = i;
@@ -778,7 +778,7 @@ function canFinish(numCourses, prerequisites) {
 }
 
 
-// 面经 滑动窗口
+// Tiktok 面经 滑动窗口
 function collectApple(buckets, target) {
     if (buckets.length === 0) {
         return [];
@@ -1092,7 +1092,6 @@ function maxKelements(nums, k) {
 //  Time complexity: O(N∗Log(N)) Space complexity: O(n)
 
 
-
 // leetcode 1151: sliding window
 // Destructure: 先遍历一边array寻找出所有1的数量 -> 查找sub array中含0最少的 且长度为数组中所有1的数量
 function minSwaps(data) {
@@ -1102,6 +1101,7 @@ function minSwaps(data) {
             countOnes++;
         }
     }
+    // 注意这两种edge case
     if (countOnes === 0 || countOnes === 1) {
         return 0;
     }
@@ -1122,5 +1122,332 @@ function minSwaps(data) {
     }
     return result;
 }
+
+// leetcode 692: sort + bucket sort;
+// Destructure: 思路比较简单 1. 首先统计每个词出现的频率 放到map 中 再建一个array从 0 到 max values， 再遍历map把相等频率的词放到同一下标 
+// 每次按需sort当前下标 取出单词 k--
+function topKFrequent(words, k) {
+    const map = new Map();
+    for (const word of words) {
+        map.set(word, (map.get(word) || 0) + 1);
+    }
+    const counter = Array(Math.max(...map.values()) + 1).fill().map((_) => []);
+    for (const [key, val] of map) {
+        counter[val].push(key);
+    }
+    let top = k;
+    let result = [];
+    for (let i = counter.length - 1; i> 0; i--) {
+        if (counter[i].length !== 0) {
+            // 这样排序的原因是 从大到小 我从array尾部pop会省时一些
+            counter[i].sort((a, b) => b.localeCompare(a));
+            while (top > 0 && counter[i].length !== 0) {
+                result.push(counter[i].pop());
+                top--;
+            }
+            if (top === 0) {
+                break;
+            }
+        }
+    }
+    return result;
+}
+//  Time complexity: O(N∗Log(N)) Space complexity: O(n) 优化： bucket + trie 不需要排序
+
+// leetcode 162:
+// Destructure: 这种通过二分法做的题一般思路是找到mid后 再去寻找一个参照物进行比较 来判断left， right 那个需要更新
+// 本题的参照物是mid 右边一位 看是否大于他 是的话 说明peak还在右边 收紧left
+function findPeakElement(nums) {
+    let left = 0;
+    let right = nums.length - 1;
+
+    while (left <= right) {
+        const mid = left + Math.floor((right - left) / 2);
+        if (nums[mid] < nums[mid + 1]) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    // 当while停止的时候left的位置一定是当前值大于左边的 即为peak
+    return left;
+}
+// TC: O(logN) SC: O(1)
+
+// Leetcode 752: BFS + Set
+// Destructure: 有点像是最短路径 每次操作走一步 难点是在于要想明白 当前组合每走一步能产生几个值呢？
+// 例如 1103 我在操作3 那应该就只有向上 向下操作 那么当前字符串 下标为三的位置 一次操作可以得到 1104和1102 注意  1103这个四位数 每个数字都能 +1 -1
+// 我们需要两个set去存已经走过的 和死路
+function openLock(deadends, target) {
+    const visited = new Set();
+    const dead = new Set(deadends);
+    if (dead.has('0000')) {
+        return -1;
+    }
+
+    const queue = [];
+    queue.push(['0000', step]);
+
+    while (queue.length !== 0) {
+        const [node, step] = queue.shift();
+        if (node === target) {
+            return step;
+        }
+        for (let i = 0; i < node.length; i++) {
+            const up = (Number(node[i] + 1)) % 10;
+            // 用 +9来代替 -1 避免 0 - 1 = -1的情况；
+            const down = (Number(node[i] + 9)) % 10;
+            const upNumber = node.slice(0, i) + String(up) + node.slice(i + 1);
+            const downNumber = node.slice(0, i) + String(down) + node.slice(i - 1);
+            // 是否出现在visited或者dead中 如果出现要跳过
+            if (!visited.has(upNumber) && !dead.has(upNumber)) {
+                queue.push([upNumber, step + 1]);
+                visited.add(upNumber);
+            }
+            if (!visited.has(downNumber) && !dead.has(downNumber)) {
+                queue.push([downNumber, step + 1]);
+                visited.add(downNumber);
+            }
+        }
+    }
+    return -1;
+}
+//Time complexity: O(N) Space complexity: O(n)
+
+// leetcode 1530 tree
+// Destructure: 从下往上才能便利的收集路径长度 后序 左右中 我们发现每个中间节点都可以进行比较 然后记录比较结果 再把加上当前层的path长度 传上去；
+function countPairs(root, distance) {
+    let result = 0;
+    const dfs = node => {
+        // 这种情况是来预防有些中间节点只有 左或者右一个分支 那往左遍历的时候就会碰到null
+        if (node === null) {
+            return [];
+        }
+        //  寻找到叶子结点 将当前path 为1的数组传递上去
+        if (node.left === null && node.right === null) {
+            return [1];
+        }
+        const left = dfs(root.left);
+        const right = dfs(root.right);
+        for (const rightNode of right) {
+            for (const leftNode of left) {
+                if (leftNode + rightNode <= distance) {
+                    result += 1;
+                }
+            }
+        }
+        const newCount = [];
+        for (let count of left.concat(right)) {
+            if (count + 1 <= distance) {
+                newCount.push(count + 1);
+            }
+        }
+        return newCount
+    }
+    dfs(root);
+    return result;
+}
+
+// Time Complexity: O(N⋅D^2) Space Complexity: O(H)
+
+// leetcode 426
+// Destructure: 用到了bst的特性 需要一个prev指向前一个node  + 寻找到head的地方
+
+function treeToDoublyList(root) {
+    if (!root) {
+        return null;
+    }
+    let prev = null;
+    let head = null;
+
+    const dfs = node => {
+        if (!node) {
+            return;
+        }
+        dfs(root.left);
+        // 寻找head 最小的那一位
+        if (!head) {
+            head = root;
+        } else {
+            // 之后的话 prev的right = 当前的 当前的left = prev
+            prev.right = root;
+            root.left = prev
+        }
+        // 移动prev到当前节点
+        prev = root;
+        dfs(root.right);
+    }
+    dfs(root);
+    // return需要我们return一个有环的 这个时候 prev指向最后一个节点
+    // 那么再把prev和head 连接起来
+
+    head.left = prev;
+    prev.right = head;
+    return head;
+}
+// Time complexity : O(N) Space complexity : O(N) recursion stack
+
+
+// leetcode 42 two pointer ｜｜ DP
+// Destructure: 整体思路就是说左右两个指针 尽量保持更大的指针 像是木桶效应一样 然后移动小的一边（记得要减去当前pointer的高度 才能得出水的高度）
+// 简单版本
+function trap(height) {
+    let result = 0;
+    let n = height.length;
+    const left = Array(n).fill(0);
+    const right = Array(n).fill(0);
+    left[0] = height[0];
+    right[right.length - 1] = height[height.length - 1];
+
+    for (let i = 1; i < height.length; i++) {
+        // 记录保持最大值 ，其实也可以找一个额外的变量去记录
+        left[i] = Math.max(height[i], left[i - 1]);
+    }
+
+    for (let i = right.length - 2; i >= 0; i--) {
+        right[i] = Math.max(height[i], right[i + 1]);
+    }
+
+    for (let i = 0; i < n; i++) {
+        result += Math.min(left[i], right[i]) - height[i];
+    }
+    return result;
+}
+// 优化： 边走边记录大值 并移动更小的一边
+function trap(height) {
+    let result = 0
+    let leftMax = 0;
+    let rightMax = 0;
+    let left = 0;
+    let right = height.length - 1;
+
+    while (left < right) {
+        leftMax = Math.max(leftMax, height[left]);
+        rightMax = Math.max(rightMax, height[right]);
+        if (leftMax < rightMax) {
+            result += leftMax - height[left];
+            left++;
+        } else {
+            result += rightMax - height[right];
+            right--;
+        }
+    }
+    return result;
+}
+
+// leetcode 76： sliding window
+// Destructure： 用map先去把需要匹配的字符用正数记录在map中 然后双指针便利 每当我们发现一个需要匹配的字符 
+// 且 map的value 大于0（如果说我们遇到需要匹配字符且value已经不大于0了， 说明这个字符是多余的） 那我们就needCount--
+// 同时遇见任何字符记录在map中 -1。 当我们的needcount为0的时候 说明当前字符串满足我们的所有要求 但是因为我要的是最短的 所以开始检查左边是否可以缩短
+// 检查的时候我们要停止的时机： 当前字母在t中的字母 且 map.get(charLeft) === 0 额外的 t中额外的相同字母也会是负数 无关字母也会是负数 永远不会先等于0
+// 然后与result中的数组做比较 保留较小的 此时我们要开始寻找下一个了 那就把left对应的字母放回去一个 left++ needcount++继续寻找新的
+
+function minWindow(s, t) {
+    // 如果s小于t没有合法的匹配
+    if (s.length < t.length) {
+        return '';
+    }
+    const map = new Map();
+    for (const char of t) {
+        map.set(char, (map.get(char || 0)));
+    }
+    let needCount = t.length;
+    let result = [0, Infinity];
+    let left = 0;
+    for (let right = 0; right < s.length; right++) {
+        const char = s[right];
+        if (map.get(char) > 0) {
+            needCount--;
+        }
+        map.set(char, (map.get(char) || 0) - 1);
+        if (needCount === 0) {
+            while (true) {
+                const charLeft = s[left];
+                if (map.get(charLeft === 0)) {
+                    break;
+                }
+                map.set(charLeft, (map.get(charLeft) || 0) + 1);
+                left++;
+            }
+            if (right - left < result[1] - result[0]) {
+                result = [left, right];
+            }
+            map.set(s[left], map.get(s[left] || 0) + 1);
+            left++;
+            needCount++;
+        }
+    }
+    return result[1] > s.length ? '' : s.slice(result[0], result[1] + 1);
+}
+
+// Time Complexity: O(∣S∣+∣T∣) where |S| and |T| represent the lengths of strings S and T.
+
+// leetcode 921: 括号 + stack
+// Destructure：查找非法括号 左括号stack + 右括号stack的和
+var minAddToMakeValid = function(s) {
+    if (s.length === 0) {
+        return 0;
+    }
+    let leftCounter = 0;
+    let rightCounter = 0;
+    for (const char of s) {
+        if (char === '(') {
+            leftCounter++;
+        } else {
+            if (leftCounter === 0) {
+                rightCounter++;
+            } else {
+                leftCounter--;
+            }
+        }
+    }
+    return leftCounter + rightCounter;
+};
+
+
+// leetcode 347 bucket sort
+// Destructure： 桶排 然后从后往前查找长度非0的index 开始pop
+function topKFrequent(nums, k) {
+    const map = new Map();
+    for (const num of nums) {
+        map.set(num, (map.get(num) || 0) + 1);
+    }
+    const bucket = Array(Math.max(...map.values() + 1)).fill().map((_) => []);
+    for (const [key, val] of map) {
+        bucket[val].push(key);
+    }
+
+    const result = [];
+    let count = k;
+    for (let i = bucket.length - 1; i >= 0; i--) {
+        while (bucket[i].length > 0) {
+            result.push(bucket[i].pop());
+            count--;
+            if (count === 0) {
+                return result;
+            }
+        }
+    }
+    return [];
+}
+// TC : O(n) SC: O(n)
+
+
+// leetcode 1010: math + two sum
+// Destructure：借鉴two sum 遍历数组的同时用一个哈希表（或者数组）记录元素的出现次数。n对于 time[i]，需要知道左边有多少个模 60 是 60−time[i]mod60 的数。
+// 对于有两个变量的题目，通常可以枚举其中一个变量，把它视作常量，从而转化成只有一个变量的问题。
+function numPairsDivisibleBy60(time) {
+    const counters = Array(60).fill(0);
+    let counter = 0;
+
+    for (const duration of counters) {
+        const remainer = duration % 60;
+        const complement = (60 - remainer) % 60;
+        counters += counters[complement];
+        counters[remainer]++;
+    }
+    return counter;
+}
+
 
 

@@ -16,18 +16,17 @@ function promiseAllSettled(iterable) {
                         value
                     };
                 },
-                    reason => {
-                        result[index] = {
-                            staus: 'rejected',
-                            reason
-                        };
-                    }).finally(() => {
-                        pending --;
-                        if (pending === 0) {
-                            resolve(result);
-                    }   
-                }
-            )
+                reason => {
+                    result[index] = {
+                        staus: 'rejected',
+                        reason
+                    };
+                }).finally(() => {
+                    pending --;
+                    if (pending === 0) {
+                        resolve(result);
+                }   
+            })
         })
     })
 }
