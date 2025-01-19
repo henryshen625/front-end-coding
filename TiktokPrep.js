@@ -1019,3 +1019,167 @@ const subtractThree = async (num) => {
 };
 const result = await asyncPipe(5, addOne, multiplyByTwo, subtractThree);
 console.log(result); 
+
+// 依次顺序执行一系列任务 所有任务全部完成后可以得到每个任务的执行结果
+// 需要要返回两个方法, start用于启动任务, pause用于暂停任务
+// 每个任务具有原子性, 即不可中断, 只能在两个任务之间中断
+
+function processTasks(...tasks) {
+  let isRunning = false;
+  const result = [];
+  let i = 0;
+  return {
+    start() {
+      return Promise(async (resolve) => {
+        if (isRunning) {
+          return;
+        }
+        isRunning = true;
+        while (i < tasks.length) {
+          const task = tasks[i];
+          const r = await task();
+          result.push(r);
+          i++;
+          if (!isRunning) {
+            return;
+          }
+        }
+        isRunning = false;
+        resolve(result);
+      });
+    },
+    pause() {
+      isRunning = false;
+    }
+  }
+};
+
+// 定义异步任务
+const task1 = () => new Promise((resolve) => {
+  setTimeout(() => {
+    console.log("Task 1 completed");
+    resolve("Result 1");
+  }, 1000);
+});
+
+const task2 = () => new Promise((resolve) => {
+  setTimeout(() => {
+    console.log("Task 2 completed");
+    resolve("Result 2");
+  }, 1000);
+});
+
+const task3 = () => new Promise((resolve) => {
+  setTimeout(() => {
+    console.log("Task 3 completed");
+    resolve("Result 3");
+  }, 1000);
+});
+
+// 创建任务控制器
+const controller = processTasks(task1, task2, task3);
+
+(async function test() {
+  console.log("Starting tasks...");
+
+  // 启动任务并暂停
+  controller.start().then((result) => console.log("Final result:", result));
+
+  setTimeout(() => {
+    console.log("Pausing tasks...");
+    controller.pause();
+
+    setTimeout(() => {
+      console.log("Resuming tasks...");
+      controller.start();
+    }, 2000); // 2 秒后重新开始
+
+  }, 1500); // 1.5 秒后暂停
+})();
+
+//  并发任务控制
+// class Scheduler {
+//   constructor(maxCount = 2) {
+//     this.queue = [];
+//     this.maxCount = maxCount;
+//     this.runCounts = 0;
+//   }
+
+//   add(promiseCreator) {
+//     this.queue.push(promiseCreator);
+//   }
+
+//   taskStart() {
+//     for (let i = 0; i  < this.maxCount; i++) {
+//       this.request();
+//     }
+//   }
+
+//   request() {
+//     if (!this.queue || this.queue.length === 0 || this.runCounts >= this.maxCount) {
+//       return;
+//     }
+//     this.runCounts++;
+//     const task = this.queue.shift();
+//     task.then(() => {
+//       this.runCounts--;
+//       this.request();
+//     });
+//   }
+
+// }
+class Scheduler {
+  constructor(maxCount) {
+    this.maxCount = maxCount;
+    this.queue = [];
+    this.runningCount = 0;
+  }
+
+  add(task) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({
+        task,
+        resolve,
+        reject
+      });
+      this.request();
+    })
+  }
+
+  request() {
+    while (this.runningCount < this.maxCount || this.queue.length !== 0) {
+      this.runningCount++;
+      const { task, resolve, reject } = this.queue.shift();
+      Promise.resolve(task()).then(resolve, reject).finally(() => {
+        this.runningCount--;
+        this.request;
+      })
+    }
+  }
+}
+
+// Promise Cache
+
+const promiseCache = new Map();
+
+function fetchData(url) {
+  if (promiseCache.has(url)) {
+    return promiseCache.get(url);
+  }
+  const promise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      console.log(`Fetching data from ${url}`);
+      resolve(`Data from ${url}`);
+    }, 1000);
+  });
+  promiseCache.set(url, promise);
+  return promise;
+}
+
+fetchData('https://api.example.com/data1')
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
+
+fetchData('https://api.example.com/data1')
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
