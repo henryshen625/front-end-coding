@@ -4,8 +4,7 @@ function debounce(func, wait = 0) {
     return function(...args) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
-          // Has the same `this` as the outer function's
-        // as it's within an arrow function.
+          // Has the same `this` as the outer function's as it's within an arrow function.
             timeoutId = null;
             func.apply(this, args);
         }, wait);
@@ -58,20 +57,15 @@ function increment() {
   j++;
 }
 const throttledIncrement = throttle(increment, 100);
-
 // t = 0: Call throttledIncrement(). j is now 1.
 throttledIncrement(); // j = 1
-
 // t = 50: Call throttledIncrement() again.
 //  j is still 1 because 100ms have not passed.
 throttledIncrement(); // j = 1
-
 // t = 101: Call throttledIncrement() again. j is now 2.
 // j can be incremented because it has been more than 100ms
 //  since the last throttledIncrement() call at t = 0.
 throttledIncrement(); //j = 2
-
-
 
 
 // deeplone 简易版
@@ -177,7 +171,6 @@ const p2 = new Promise((resolve, reject) => {
     resolve('foo');
   }, 100);
 });
-
 await promiseAll([p0, p1, p2]); // [3, 42, 'foo']
 
 // Rejection example.
@@ -187,14 +180,11 @@ const p4 = new Promise((resolve, reject) => {
     reject('An error occurred!');
   }, 100);
 });
-
 try {
   await promiseAll([p3, p4]);
 } catch (err) {
   console.log(err); // 'An error occurred!'
 }
-
-
 
 
 // Event Emitter
@@ -381,14 +371,13 @@ function setHasOverlap(setA, setB) {
     }
   
     return false;
-}
-  
+} 
   /**
    * @param {Array<{user: number, duration: number, equipment: Array<string>}>} sessions
    * @param {{user?: number, minDuration?: number, equipment?: Array<string>, merge?: boolean}} [options]
    * @return {Array}
    */
-export default function selectData(sessions, options = {}) {
+function selectData(sessions, options = {}) {
     const reversedSessions = sessions.slice().reverse(); // Make a copy and reverse.
     const sessionsForUser = new Map();
     const sessionsProcessed = [];
@@ -397,17 +386,21 @@ export default function selectData(sessions, options = {}) {
     // prepare the merge and set user map
     reversedSessions.forEach((session) => {
       if (options.merge && sessionsForUser.has(session.user)) {
+        // 获取map user
         const userSession = sessionsForUser.get(session.user);
+        // 累加duration
         userSession.duration += session.duration;
+        // add 当前equipment
         session.equipment.forEach((equipment) => {
           userSession.equipment.add(equipment);
         });
       } else {
+        // 把equipment放在set中
         const clonedSession = {
           ...session,
           equipment: new Set(session.equipment),
         };
-  
+        // 如果有merge需求 需要建立map
         if (options.merge) {
           sessionsForUser.set(session.user, clonedSession);
         }
@@ -419,12 +412,12 @@ export default function selectData(sessions, options = {}) {
     sessionsProcessed.reverse();
   
     const results = [];
+    // equipment建立set 查找表格
     const optionEquipments = new Set(options.equipment);
     sessionsProcessed.forEach((session) => {
       if (
         (options.user != null && options.user !== session.user) ||
-        (optionEquipments.size > 0 &&
-          !setHasOverlap(optionEquipments, session.equipment)) ||
+        (optionEquipments.size > 0 && !setHasOverlap(optionEquipments, session.equipment)) ||
         (options.minDuration != null && options.minDuration > session.duration)
       ) {
         return;
@@ -432,6 +425,7 @@ export default function selectData(sessions, options = {}) {
   
       results.push({
         ...session,
+        //把set转换回来
         equipment: Array.from(session.equipment).sort(),
       });
     });
@@ -500,11 +494,11 @@ selectData(sessions, { merge: true, minDuration: 400 });
 
   
   
-  // apply
+// apply
 function myApply(ctx, args) {
     ctx = ctx === null|| ctx === undefined ? globalThis : Object(ctx);
     const key = new Symbol()
-    Object.defineProperties(ctx, key, {
+    Object.defineProperty(ctx, key, {
         value: this,
         enumerable: false
     });
@@ -513,17 +507,18 @@ function myApply(ctx, args) {
     return r;
 }
 
- 
-
 // call
 function myCall(ctx, ...args) {
     ctx = ctx === null || ctx === undefined ? globalThis : Object(ctx);
     const key = new Symbol();
-    Object.defineProperties(ctx, key, {
-        value: this,
+    // Symbol 是 JavaScript 中的唯一值，用于确保临时属性名不会冲突。
+    Object.defineProperty(ctx, key, {
+        value: this, // 这里的 this 是调用apply前面的函数
         enumerable: false
     });
+    // 将函数挂载到上下文对象
     const r = ctx[key](...args);
+    // 清理临时属性
     delete ctx[key];
     return r;
 }
@@ -536,7 +531,7 @@ function method(a, b) {
 method.myCall(1, 2, 3)
 
 
-//bind
+//bind !
 Function.prototype.myBind = function (ctx, ...args) {
     const fn = this;
     return function(...subArgs) {
@@ -569,7 +564,7 @@ function myMap(callBackFn, thisArg) {
      // 检查空位
     for (let k = 0; k < len; k++) {
         if (Object.hasOwn(this, k)) {
-            //map也可以传入两个参数 一个是callBack 一个是callbak里this的指向
+            // map也可以传入两个参数 一个是callBack 一个是callbak里this的指向
             // callBack可以接受三个参数： 当前值， index 和 整个数组
             array[k] = callBackFn.call(thisArg, this[k], k, this);
         }
@@ -679,9 +674,9 @@ function mySqure() {
     return cloned;
   }
   
-  export default function deepClone(value) {
+  function deepClone(value) {
     return deepCloneWithCache(value, new Map());
-}
+  }
 
 // Test case:
 const obj11 = {
@@ -722,6 +717,7 @@ function paralleTask(tasks, parallelCount) {
     }
     let nextIndex = 0;
     let finishCount = 0;
+    // const result = Array(tasks.length);
     // 如果需要返回一个result数组的话 const result = [];
     function _request() {
       const task = tasks[nextIndex];
@@ -744,9 +740,9 @@ function paralleTask(tasks, parallelCount) {
   });
 }
 
+// flattenArray
 function flattenArray(array, level = 1) {
   let result = [];
-  
   for (let i = 0; i < array.length; i++) {
     const item = array[i];
     if (Array.isArray(item) && level > 0) {
@@ -757,13 +753,11 @@ function flattenArray(array, level = 1) {
       result.push(item);
     }
   }
-  
   return result;
 }
 
 // Example usage:
 const nestedArray = [1, [2, [3, [4, 5]]], 6];
-
 console.log(flattenArray(nestedArray, 1)); // [1, 2, [3, [4, 5]], 6]
 console.log(flattenArray(nestedArray, 2)); // [1, 2, 3, [4, 5], 6]
 console.log(flattenArray(nestedArray, 3)); // [1, 2, 3, 4, 5, 6]
@@ -829,8 +823,6 @@ function playAnimation(startCallback, endCallback) {
 const startBoth = wrapBoth();
 startBoth();
 
-  
-
 
  
 function useTimeout(callback, delay) {
@@ -852,25 +844,17 @@ function useTimeout(callback, delay) {
   }, [delay]);
 };
   // callback 回调函数， delay 延迟时间
-  useTimeout(callback, delay);
+useTimeout(callback, delay);
 
-  import { useState, useEffect } from "react";
 
-  /**
-   * Custom Hook: useDebounce
-   * @param {any} value - The value to debounce.
-   * @param {number} delay - The debounce delay in milliseconds.
-   * @returns {any} - The debounced value.
-   */
+import { useState, useEffect } from "react";
 export default function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
     // Set a timeout to update the debounced value
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
     // Cleanup function to clear the timeout if value or delay changes
     return () => {
       clearTimeout(handler);
@@ -908,11 +892,6 @@ export default function SearchComponent() {
 
 import { useRef, useEffect } from "react";
 
-/**
- * Custom Hook: usePrevious
- * @param {any} value - The value whose previous value you want to store.
- * @returns {any} - The previous value.
- */
 export default function usePrevious(value) {
   const ref = useRef();
 
@@ -922,34 +901,7 @@ export default function usePrevious(value) {
 
   return ref.current; // Return the previous value (before the most recent render)
 }
-// 因为useEffect是在组件渲染后执行 所以每次return老的值 再更新的值
-
-import React, { useState } from "react";
-import useDebounce from "./useDebounce";
-
-export default function SearchComponent() {
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 500); // Debounce the query with a delay of 500ms
-
-  useEffect(() => {
-    if (debouncedQuery) {
-      // Perform API call or expensive operation with debouncedQuery
-      console.log("Performing search for:", debouncedQuery);
-    }
-  }, [debouncedQuery]); // Trigger effect when debounced value changes
-
-  return (
-    <div>
-      <input
-        type="text"
-        placeholder="Search..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-    </div>
-  );
-}
-  
+// 因为useEffect是在组件渲染后执行 所以每次return老的值 再更新的值 
 
 function sanitizeVersion(version) {
   let sanitized = "";
@@ -984,7 +936,6 @@ const sortedVersions = versions.sort(compareVersions);
 
 console.log(sortedVersions);
 // Output: ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", "1.2.1", "1.21.0", "1.0.0"]
-
 
 
 // 管道函数
@@ -1030,7 +981,7 @@ function processTasks(...tasks) {
   let i = 0;
   return {
     start() {
-      return Promise(async (resolve) => {
+      return new Promise(async (resolve) => {
         if (isRunning) {
           return;
         }
@@ -1097,7 +1048,7 @@ const controller = processTasks(task1, task2, task3);
   }, 1500); // 1.5 秒后暂停
 })();
 
-//  并发任务控制
+//  并行限制的Promise调度器
 // class Scheduler {
 //   constructor(maxCount = 2) {
 //     this.queue = [];
@@ -1152,7 +1103,7 @@ class Scheduler {
       const { task, resolve, reject } = this.queue.shift();
       Promise.resolve(task()).then(resolve, reject).finally(() => {
         this.runningCount--;
-        this.request;
+        this.request();
       })
     }
   }
@@ -1183,3 +1134,173 @@ fetchData('https://api.example.com/data1')
 fetchData('https://api.example.com/data1')
   .then(data => console.log(data))
   .catch(error => console.error(error));
+
+
+// fetchWithRetry
+function fetchWithRetry(url, options, maxRetry = 3) {
+  return new Promise((resolve, reject) => {
+    const doFetch = async (attempt) => {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok) {
+          resolve(response);
+        }
+      } catch (error) {
+        if (attempt < maxRetry) {
+          doFetch(attempt + 1);
+        } else {
+          reject('Max retires reached..');
+        }
+      }
+    };
+    doFetch(0);
+  })
+}
+function fetchWithRetry(url, options, maxRetry = 3) {
+  return new Promise((resolve, reject) => {
+    const doFetch = (attempt) => {
+      Promise.resolve()
+        .then(() => fetch(url, options))
+        .then((response) => {
+          if (response.ok) {
+            resolve(response); // 如果响应成功且状态为 200~299，则解析并返回
+          } else {
+            throw new Error('Non-OK response'); // 如果状态不是 OK，抛出错误
+          }
+        })
+        .catch((error) => {
+          if (attempt < maxRetry) {
+            doFetch(attempt + 1); // 重试逻辑
+          } else {
+            reject(`Max retries reached: ${error.message}`); // 达到最大重试次数
+          }
+        });
+    };
+    doFetch(0); // 初次调用
+  });
+}
+fetchWithRetry("https://jsonplaceholder.typicode.com/posts/1", {}, 3)
+  .then((response) => response.json())
+  .then((data) => console.log("Success:", data))
+  .catch((error) => console.error("Failed:", error));
+
+fetchWithRetry("https://invalid-url", {}, 2)
+  .then((response) => console.log("Success:", response))
+  .catch((error) => console.error("Failed:", error)); // 输出：Max retries reached...
+
+
+// promise红绿灯
+
+function red() {
+  console.log('Red');
+}
+
+function green() {
+  console.log('Green');
+}
+
+function yellow() {
+  console.log('Yellow');
+}
+
+const light = function(timer, cb) {
+  return new Promise((resolve) => {
+    cb();
+    setTimeout(() => {
+      resolve();
+    }, timer);
+  })
+};
+
+const step = function () {
+  Promise.resolve().then(() => {
+    return light(3000, red);
+  }).then(() => {
+    return light(2000, green);
+  }).then(() => {
+    return light(2000, yellow);
+  })
+}
+step();
+
+
+function useThrottle(value, delay) {
+  const [throttledValue, setThrottledValue] = useState(value);
+  const lastExecuted = useRef(0);
+
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastExecuted.current >= delay) {
+      setThrottledValue(value);
+      lastExecuted.current = now;
+    }
+  }, [value, delay]);
+
+  return throttledValue;
+}
+
+const throttledScroll = useThrottle(scrollPosition, 200);
+useEffect(() => {
+  console.log("Throttled Scroll Position:", throttledScroll);
+}, [throttledScroll]);
+
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
+const [theme, setTheme] = useLocalStorage("theme", "light");
+
+function useInterval(callback, delay) {
+  const savedCallback = useRef();
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    if (delay === null) return;
+    const id = setInterval(() => savedCallback.current(), delay);
+    return () => clearInterval(id);
+  }, [delay]);
+}
+
+useInterval(() => {
+  console.log("Polling data...");
+}, 1000);
+
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return size;
+}

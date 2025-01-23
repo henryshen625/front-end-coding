@@ -107,3 +107,35 @@ console.log(extractFirstNumberFromString("abc789def123"));  // 输出: 789
 console.log(extractFirstNumberFromString("    "));          // 输出: 0
 console.log(extractFirstNumberFromString("abc123"));        // 输出: 123
 console.log(extractFirstNumberFromString("456abc123"));     // 输出: 456
+
+
+
+function myParseInt(input) {
+    // 转换输入为字符串并移除两端空格
+    const str = String(input).trim();
+  
+    if (!str) return NaN; // 空字符串返回 NaN
+  
+    let index = 0;
+    let sign = 1; // 默认正数
+  
+    // 检查是否有正负号
+    if (str[index] === '-' || str[index] === '+') {
+      sign = str[index] === '-' ? -1 : 1;
+      index++;
+    }
+  
+    // 提取有效数字部分
+    let numStr = '';
+    while (index < str.length && '0123456789'.includes(str[index])) {
+      numStr += str[index];
+      index++;
+    }
+  
+    // 如果没有提取到有效数字，返回 NaN
+    if (!numStr) return NaN;
+  
+    // 将提取的字符串转换为整数并加上符号
+    return sign * numStr.split('').reduce((acc, char) => acc * 10 + (char - '0'), 0);
+  }
+  
