@@ -7,7 +7,6 @@ function promiseAllSettled(iterable) {
             resolve(result)
             return;
         }
-
         iterable.forEach((item, index) => {
             Promise.resolve(item).then(
                 value => {
@@ -25,7 +24,7 @@ function promiseAllSettled(iterable) {
                     pending --;
                     if (pending === 0) {
                         resolve(result);
-                }   
+                    }   
             })
         })
     })

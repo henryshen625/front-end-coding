@@ -184,7 +184,7 @@ function lengthOfLongestSubstring(s) {
         const char = s[right];
         map.set(char, (map.get(char) || 0) + 1);
         if (map.size === right - left + 1) {
-            result = Math.max(result, result - left + 1);
+            result = Math.max(result, right - left + 1);
         }
         while (right - left + 1 > map.size) {
             const leftChar = s[left];
@@ -388,9 +388,9 @@ function wordBreak(s, wordDict) {
             const prefix = s.slice(start, i);
             // 如果说当前sub string在set中 且之后substring也能顺利包含的话 return true （剪枝）
             if (wordSet.has(prefix) && canBreak(i)) {
-                return true;
-                // 说明当前start的这个位置是能分割的
                 memo[start] = true;
+                return true;
+                // 说明当前start的这个位置是能分割的  
             }
         }
         memo[start] = false;
@@ -1054,7 +1054,6 @@ function findKthPositive(arr, k) {
     if (arr[0] > k) {
         return k;
     }
-
     let left = 0;
     let right = arr.length - 1;
     while ( left <= right) {
@@ -1349,7 +1348,7 @@ function minWindow(s, t) {
     }
     const map = new Map();
     for (const char of t) {
-        map.set(char, (map.get(char || 0)));
+        map.set(char, (map.get(char) || 0) + 1);
     }
     let needCount = t.length;
     let result = [0, Infinity];
@@ -1440,14 +1439,29 @@ function numPairsDivisibleBy60(time) {
     const counters = Array(60).fill(0);
     let counter = 0;
 
-    for (const duration of counters) {
+    for (const duration of time) {
         const remainer = duration % 60;
         const complement = (60 - remainer) % 60;
-        counters += counters[complement];
+        counters += counters[complement]; // 注意添加顺序 要先计算counter 再填充bucket 不然如果是30 / 60 回重复计算当前数字
         counters[remainer]++;
     }
     return counter;
 }
 
-
+const useState = defaultValue => {
+    const value = useRef(defaultValue);
+    
+    const setValue = newValue => {
+        if (typeof newValue === 'function') {
+            value.current = newValue(value.current);
+        } else {
+            value.current = value;
+        }
+    }
+    
+    //  触发组件的重新渲染
+    dispatchAction();
+    
+    return [value, setValue];
+}
 

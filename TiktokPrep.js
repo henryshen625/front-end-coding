@@ -136,57 +136,6 @@ get(john, 'profile.gender'); // 'Male'
 get(jane, 'profile.name.firstName'); // undefined
 get({ a: [{ b: { c: 3 } }] }, 'a.0.b.c'); // 3
 
-  
-
-
-// Promise.all
-function promiseAll(iterable) {
-    return new Promise((resolve, reject) => {
-        if (iterable.length === 0) {
-            resolve([]);
-            return; //!
-        }
-        let unresolve = iterable.length;
-        const result = Array(iterable.length);
-        iterable.forEach((item, index) => {
-          Promise.resolve(item).then((data) => {
-            result[index] = data;
-            unresolve--;
-            if (unresolve === 0) {
-                resolve(result);
-            }
-          }).catch((err) => {
-            reject(err);
-          })  
-        })
-    });
-}
-
-// Test case
-// Resolved example.
-const p0 = Promise.resolve(3);
-const p1 = 42;
-const p2 = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve('foo');
-  }, 100);
-});
-await promiseAll([p0, p1, p2]); // [3, 42, 'foo']
-
-// Rejection example.
-const p3 = Promise.resolve(30);
-const p4 = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    reject('An error occurred!');
-  }, 100);
-});
-try {
-  await promiseAll([p3, p4]);
-} catch (err) {
-  console.log(err); // 'An error occurred!'
-}
-
-
 // Event Emitter
 class EventEmitter {
     constructor() {
@@ -290,9 +239,6 @@ const tree = {
     </div>
   </body>`;
   
-
-
-
 
 // Event Emitter2 
 class EventEmitter {
@@ -492,6 +438,108 @@ selectData(sessions, { merge: true, minDuration: 400 });
 //   { user: 2, duration: 400, equipment: ['bike', 'treadmill'] },
 // ];
 
+// deepClone
+/**
+ * @template T
+ * @param {T} value
+ * @return {T}
+ */
+
+function isPrimitiveTypeOrFunction(value) {
+  return typeof value !== 'object' || typeof value === 'function' || value === null;
+}
+
+function getType(value) {
+  const type = typeof value;
+  if (type !== 'object') {
+    return type;
+  }
+  return Object.prototype.toString.call(value).replace(/^\[object (\S+)\]$/, '$1').toLowerCase();
+}
+
+function deepCloneWithCache(value, cache) {
+  if (isPrimitiveTypeOrFunction(value)) {
+    return value;
+  }
+
+  const type = getType(value);
+  if (type === 'set') {
+    const cloned = new Set();
+    value.forEach((item) => {
+      cloned.add(deepCloneWithCache(item, cache));
+    });
+    return cloned;
+  }
+
+  if (type === 'map') {
+    const cloned = new Map();
+    value.forEach((value_, key) => {
+      cloned.set(key, deepCloneWithCache(value_, cache));
+    });
+    return cloned;
+  }
+
+  if (type === 'function') {
+    return value;
+  }
+
+  if (type === 'array') {
+    return value.map((item) => deepCloneWithCache(item));
+  }
+
+  if (type === 'date') {
+    return new Date(value);
+  }
+
+  if (type === 'regexp') {
+    return new RegExp(value);
+  }
+
+  if (cache.has(value)) {
+    return cache.get(value);
+  }
+
+  const cloned = Object.create(Object.getPrototypeOf(value));
+
+  cache.set(value, cloned);
+  for (const key of Reflect.ownKeys(value)) {
+    const item = value[key];
+    cloned[key] = isPrimitiveTypeOrFunction(item) ? item :deepCloneWithCache(item, cache);
+  }
+  return cloned;
+}
+
+function deepClone(value) {
+  return deepCloneWithCache(value, new Map());
+}
+
+// Test case:
+const obj11 = {
+  num: 0,
+  str: '',
+  boolean: true,
+  unf: undefined,
+  nul: null,
+  obj: { name: 'foo', id: 1 },
+  arr: [0, 1, 2],
+  date: new Date(),
+  reg: new RegExp('/bar/ig'),
+  [Symbol('s')]: 'baz',
+};
+
+const clonedObj1 = deepClone(obj11);
+clonedObj1.arr.push(3);
+obj1.arr; // Should still be [0, 1, 2]
+
+const obj2 = { a: {} };
+obj2.a.b = obj2; // Circular reference
+
+const clonedObj12 = deepClone(obj12); // Should not cause a stack overflow by recursing into an infinite loop.
+
+clonedObj2.a.b = 'something new';
+
+obj2.a.b === obj2; // This should still be true
+
   
   
 // apply
@@ -592,317 +640,6 @@ function myReduce(callBackFn, initialValue) {
 }
 
 
-// square:
-function mySqure() {
-    const len = this.length;
-    const result = new Array(len);
-
-    for (let i = 0; i < len; i++) {
-        result[i] = this[i] * this[i]
-    }
-    return result;
-}
-
-// deepClone
-/**
- * @template T
- * @param {T} value
- * @return {T}
- */
-
-  function isPrimitiveTypeOrFunction(value) {
-    return typeof value !== 'object' || typeof value === 'function' || value === null;
-  }
-  
-  function getType(value) {
-    const type = typeof value;
-    if (type !== 'object') {
-      return type;
-    }
-    return Object.prototype.toString.call(value).replace(/^\[object (\S+)\]$/, '$1').toLowerCase();
-  }
-  
-  function deepCloneWithCache(value, cache) {
-    if (isPrimitiveTypeOrFunction(value)) {
-      return value;
-    }
-  
-    const type = getType(value);
-    if (type === 'set') {
-      const cloned = new Set();
-      value.forEach((item) => {
-        cloned.add(deepCloneWithCache(item, cache));
-      });
-      return cloned;
-    }
-  
-    if (type === 'map') {
-      const cloned = new Map();
-      value.forEach((value_, key) => {
-        cloned.set(key, deepCloneWithCache(value_, cache));
-      });
-      return cloned;
-    }
-  
-    if (type === 'function') {
-      return value;
-    }
-  
-    if (type === 'array') {
-      return value.map((item) => deepCloneWithCache(item));
-    }
-  
-    if (type === 'date') {
-      return new Date(value);
-    }
-  
-    if (type === 'regexp') {
-      return new RegExp(value);
-    }
-  
-    if (cache.has(value)) {
-      return cache.get(value);
-    }
-  
-    const cloned = Object.create(Object.getPrototypeOf(value));
-  
-    cache.set(value, cloned);
-    for (const key of Reflect.ownKeys(value)) {
-      const item = value[key];
-      cloned[key] = isPrimitiveTypeOrFunction(item) ? item :deepCloneWithCache(item, cache);
-    }
-    return cloned;
-  }
-  
-  function deepClone(value) {
-    return deepCloneWithCache(value, new Map());
-  }
-
-// Test case:
-const obj11 = {
-    num: 0,
-    str: '',
-    boolean: true,
-    unf: undefined,
-    nul: null,
-    obj: { name: 'foo', id: 1 },
-    arr: [0, 1, 2],
-    date: new Date(),
-    reg: new RegExp('/bar/ig'),
-    [Symbol('s')]: 'baz',
-  };
-  
-  const clonedObj1 = deepClone(obj11);
-  clonedObj1.arr.push(3);
-  obj1.arr; // Should still be [0, 1, 2]
-  
-  const obj2 = { a: {} };
-  obj2.a.b = obj2; // Circular reference
-  
-  const clonedObj12 = deepClone(obj12); // Should not cause a stack overflow by recursing into an infinite loop.
-  
-  clonedObj2.a.b = 'something new';
-  
-  obj2.a.b === obj2; // This should still be true
-
-
-
-
-// 并发任务控制
-function paralleTask(tasks, parallelCount) {
-  return new Promise(resolve => {
-    if (tasks.length === 0) {
-      resolve();
-      return;
-    }
-    let nextIndex = 0;
-    let finishCount = 0;
-    // const result = Array(tasks.length);
-    // 如果需要返回一个result数组的话 const result = [];
-    function _request() {
-      const task = tasks[nextIndex];
-      // const i = nextIndex;
-      nextIndex++;
-      task().then(() => {
-        //result[i] = data....
-        finishCount++;
-        if (nextIndex < tasks.length) {
-          _request();
-        } else if (finishCount === tasks.length) {
-          resolve();
-          //resolve(result);
-        }
-      })
-    }
-    for (let i = 0; i < Math.min(tasks.length, parallelCount); i++) {
-      _request();
-    }
-  });
-}
-
-// flattenArray
-function flattenArray(array, level = 1) {
-  let result = [];
-  for (let i = 0; i < array.length; i++) {
-    const item = array[i];
-    if (Array.isArray(item) && level > 0) {
-      // Recursively flatten if the item is an array and we still have levels to flatten
-      result = result.concat(flattenArray(item, level - 1));
-    } else {
-      // Add the item to the result
-      result.push(item);
-    }
-  }
-  return result;
-}
-
-// Example usage:
-const nestedArray = [1, [2, [3, [4, 5]]], 6];
-console.log(flattenArray(nestedArray, 1)); // [1, 2, [3, [4, 5]], 6]
-console.log(flattenArray(nestedArray, 2)); // [1, 2, 3, [4, 5], 6]
-console.log(flattenArray(nestedArray, 3)); // [1, 2, 3, 4, 5, 6]
-console.log(flattenArray(nestedArray, 0)); // [1, [2, [3, [4, 5]]], 6]
-
-
-// 场景题
-function wrapBoth() {
-    let activeCount = 0;
-    let finishedCount = 0;
-    
-    // 用于开始执行时调用
-    function startTracking() {
-        if (activeCount === 0) {
-            bothStart();
-        }
-        activeCount++;
-    }
-
-    // 用于结束时调用
-    function endTracking() {
-        finishedCount++;
-        if (finishedCount === activeCount) {
-            bothEnd();
-        }
-    }
-
-    function bothStart() {
-        console.log('Both started!');
-    }
-    
-    function bothEnd() {
-        console.log('Both ended!');
-    }
-
-    // 包装 playMusic 和 playAnimation
-    return function() {
-        playMusic(startTracking, () => {
-            console.log('Music finished');
-            endTracking();
-        });
-        playAnimation(startTracking, () => {
-            console.log('Animation finished');
-            endTracking();
-        });
-    };
-}
-
-// 示例函数实现
-function playMusic(startCallback, endCallback) {
-    startCallback();
-    console.log('Music started');
-    setTimeout(endCallback, 1000); // 模拟异步操作
-}
-
-function playAnimation(startCallback, endCallback) {
-    startCallback();
-    console.log('Animation started');
-    setTimeout(endCallback, 2000); // 模拟异步操作
-}
-
-// 使用示例
-const startBoth = wrapBoth();
-startBoth();
-
-
- 
-function useTimeout(callback, delay) {
-  const memorizeCallback = useRef();
-
-  useEffect(() => {
-    memorizeCallback.current = callback;
-  }, [callback]);
-  // memorizeCallback.current 的初始值会是 callback，但之后不会随着 callback 的更新而改变，除非手动更新它。
-  useEffect(() => {
-    if (delay !== null) {
-      const timer = setTimeout(() => {
-        memorizeCallback.current();
-      }, delay);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [delay]);
-};
-  // callback 回调函数， delay 延迟时间
-useTimeout(callback, delay);
-
-
-import { useState, useEffect } from "react";
-export default function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    // Set a timeout to update the debounced value
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    // Cleanup function to clear the timeout if value or delay changes
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]); // Re-run effect if value or delay changes
-
-  return debouncedValue;
-}
-
-import React, { useState } from "react";
-import useDebounce from "./useDebounce";
-
-export default function SearchComponent() {
-  const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 500); // Debounce the query with a delay of 500ms
-
-  useEffect(() => {
-    if (debouncedQuery) {
-      // Perform API call or expensive operation with debouncedQuery
-      console.log("Performing search for:", debouncedQuery);
-    }
-  }, [debouncedQuery]); // Trigger effect when debounced value changes
-
-  return (
-    <div>
-      <input
-        type="text"
-        placeholder="Search..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-    </div>
-  );
-}
-
-import { useRef, useEffect } from "react";
-
-export default function usePrevious(value) {
-  const ref = useRef();
-
-  useEffect(() => {
-    ref.current = value; // Update ref to the current value on every render
-  }, [value]); // Trigger effect whenever the value changes
-
-  return ref.current; // Return the previous value (before the most recent render)
-}
-// 因为useEffect是在组件渲染后执行 所以每次return老的值 再更新的值 
-
 function sanitizeVersion(version) {
   let sanitized = "";
   for (let char of version) {
@@ -970,6 +707,183 @@ const subtractThree = async (num) => {
 };
 const result = await asyncPipe(5, addOne, multiplyByTwo, subtractThree);
 console.log(result); 
+
+
+// square:
+function mySqure() {
+    const len = this.length;
+    const result = new Array(len);
+
+    for (let i = 0; i < len; i++) {
+        result[i] = this[i] * this[i]
+    }
+    return result;
+}
+
+
+// flattenArray
+function flattenArray(array, level = 1) {
+  let result = [];
+  for (let i = 0; i < array.length; i++) {
+    const item = array[i];
+    if (Array.isArray(item) && level > 0) {
+      // Recursively flatten if the item is an array and we still have levels to flatten
+      result = result.concat(flattenArray(item, level - 1));
+    } else {
+      // Add the item to the result
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+// Example usage:
+const nestedArray = [1, [2, [3, [4, 5]]], 6];
+console.log(flattenArray(nestedArray, 1)); // [1, 2, [3, [4, 5]], 6]
+console.log(flattenArray(nestedArray, 2)); // [1, 2, 3, [4, 5], 6]
+console.log(flattenArray(nestedArray, 3)); // [1, 2, 3, 4, 5, 6]
+console.log(flattenArray(nestedArray, 0)); // [1, [2, [3, [4, 5]]], 6]
+
+
+
+// Promise.all
+function promiseAll(iterable) {
+  return new Promise((resolve, reject) => {
+      if (iterable.length === 0) {
+          resolve([]);
+          return; //!
+      }
+      let unresolve = iterable.length;
+      const result = Array(iterable.length);
+      iterable.forEach((item, index) => {
+        Promise.resolve(item).then((data) => {
+          result[index] = data;
+          unresolve--;
+          if (unresolve === 0) {
+              resolve(result);
+          }
+        }).catch((err) => {
+          reject(err);
+        })  
+      })
+  });
+}
+
+// Test case
+// Resolved example.
+const p0 = Promise.resolve(3);
+const p1 = 42;
+const p2 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve('foo');
+  }, 100);
+});
+await promiseAll([p0, p1, p2]); // [3, 42, 'foo']
+
+// Rejection example.
+const p3 = Promise.resolve(30);
+const p4 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    reject('An error occurred!');
+  }, 100);
+});
+try {
+  await promiseAll([p3, p4]);
+} catch (err) {
+  console.log(err); // 'An error occurred!'
+}
+
+
+// 并发任务控制
+function paralleTask(tasks, parallelCount) {
+  return new Promise(resolve => {
+    if (tasks.length === 0) {
+      resolve();
+      return;
+    }
+    let nextIndex = 0;
+    let finishCount = 0;
+    // const result = Array(tasks.length);
+    // 如果需要返回一个result数组的话 const result = [];
+    function _request() {
+      const task = tasks[nextIndex];
+      // const i = nextIndex;
+      nextIndex++;
+      task().then(() => {
+        //result[i] = data....
+        finishCount++;
+        if (nextIndex < tasks.length) {
+          _request();
+        } else if (finishCount === tasks.length) {
+          resolve();
+          //resolve(result);
+        }
+      })
+    }
+    for (let i = 0; i < Math.min(tasks.length, parallelCount); i++) {
+      _request();
+    }
+  });
+}
+
+// 场景题
+function wrapBoth() {
+    let activeCount = 0;
+    let finishedCount = 0;
+    
+    // 用于开始执行时调用
+    function startTracking() {
+        if (activeCount === 0) {
+            bothStart();
+        }
+        activeCount++;
+    }
+
+    // 用于结束时调用
+    function endTracking() {
+        finishedCount++;
+        if (finishedCount === activeCount) {
+            bothEnd();
+        }
+    }
+
+    function bothStart() {
+        console.log('Both started!');
+    }
+    
+    function bothEnd() {
+        console.log('Both ended!');
+    }
+
+    // 包装 playMusic 和 playAnimation
+    return function() {
+        playMusic(startTracking, () => {
+            console.log('Music finished');
+            endTracking();
+        });
+        playAnimation(startTracking, () => {
+            console.log('Animation finished');
+            endTracking();
+        });
+    };
+}
+
+// 示例函数实现
+function playMusic(startCallback, endCallback) {
+    startCallback();
+    console.log('Music started');
+    setTimeout(endCallback, 1000); // 模拟异步操作
+}
+
+function playAnimation(startCallback, endCallback) {
+    startCallback();
+    console.log('Animation started');
+    setTimeout(endCallback, 2000); // 模拟异步操作
+}
+
+// 使用示例
+const startBoth = wrapBoth();
+startBoth();
 
 // 依次顺序执行一系列任务 所有任务全部完成后可以得到每个任务的执行结果
 // 需要要返回两个方法, start用于启动任务, pause用于暂停任务
@@ -1188,6 +1102,46 @@ fetchWithRetry("https://invalid-url", {}, 2)
   .then((response) => console.log("Success:", response))
   .catch((error) => console.error("Failed:", error)); // 输出：Max retries reached...
 
+function promiseAllSettled(iterable) {
+  return new Promise((resolve, reject) => {
+      const result = new Array(iterable.length);
+      let pending = iterable.length;
+
+      if (pending === 0) {
+          resolve(result)
+          return;
+      }
+      iterable.forEach((item, index) => {
+          Promise.resolve(item).then(
+              value => {
+                  result[index] = {
+                      status: 'fulfilled',
+                      value
+                  };
+              },
+              reason => {
+                  result[index] = {
+                      staus: 'rejected',
+                      reason
+                  };
+              }).finally(() => {
+                  pending --;
+                  if (pending === 0) {
+                      resolve(result);
+                  }   
+          })
+      })
+  })
+}
+  
+async function mergePromise(promises) {
+  const data = [];
+  for (let i = 0; i < promises.length; i++) {
+    const result = await promises[i](); // 按顺序执行
+    data.push(result); // 存储结果
+  }
+  return data;
+}
 
 // promise红绿灯
 
@@ -1304,3 +1258,121 @@ function useWindowSize() {
 
   return size;
 }
+
+function useTimeout(callback, delay) {
+  const memorizeCallback = useRef();
+
+  useEffect(() => {
+    memorizeCallback.current = callback;
+  }, [callback]);
+  // memorizeCallback.current 的初始值会是 callback，但之后不会随着 callback 的更新而改变，除非手动更新它。
+  useEffect(() => {
+    if (delay !== null) {
+      const timer = setTimeout(() => {
+        memorizeCallback.current();
+      }, delay);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [delay]);
+};
+  // callback 回调函数， delay 延迟时间
+useTimeout(callback, delay);
+
+
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    // Set a timeout to update the debounced value
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    // Cleanup function to clear the timeout if value or delay changes
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]); // Re-run effect if value or delay changes
+
+  return debouncedValue;
+}
+
+import useDebounce from "./useDebounce";
+
+function SearchComponent() {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 500); // Debounce the query with a delay of 500ms
+
+  useEffect(() => {
+    if (debouncedQuery) {
+      // Perform API call or expensive operation with debouncedQuery
+      console.log("Performing search for:", debouncedQuery);
+    }
+  }, [debouncedQuery]); // Trigger effect when debounced value changes
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+    </div>
+  );
+}
+
+
+function usePrevious(value) {
+  const ref = useRef();
+
+  useEffect(() => {
+    ref.current = value; // Update ref to the current value on every render
+  }, [value]); // Trigger effect whenever the value changes
+
+  return ref.current; // Return the previous value (before the most recent render)
+}
+// 因为useEffect是在组件渲染后执行 所以每次return老的值 再更新的值 
+
+
+function useParamFetch (url, param, retryTimes = 3) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const buildUrlWithParams = () => {
+    const query = new URLSearchParams(param).toString();
+    return `${url}?${query}`;
+  };
+
+  useEffect(() => {
+    const fetchData = (attemptsLeft) => {
+      setLoading(true);
+      setError(null);
+
+      fetch(buildUrlWithParams())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((result) => {
+          setData(result);
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (attemptsLeft > 0) {
+            fetchData(attemptsLeft - 1);
+          } else {
+            setError(err);
+            setLoading(false);
+          }
+        });
+    };
+
+    fetchData(retryTimes);
+  }, [url, param, retryTimes]);
+
+  return { data, error, loading };
+};

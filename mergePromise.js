@@ -1,13 +1,4 @@
 async function mergePromise(promises) {
-    const data = [];
-    for (let i = 0; i < promises.length; i++) {
-      const result = await promises[i](); // 按顺序执行
-      data.push(result); // 存储结果
-    }
-    return data;
-}
-  
-async function mergePromise(promises) {
   const data = [];
   for (let i = 0; i < promises.length; i++) {
     const result = await promises[i](); // 按顺序执行
