@@ -1448,6 +1448,67 @@ function numPairsDivisibleBy60(time) {
     return counter;
 }
 
+
+function sortColors(nums) {
+    if (nums.length === 0) {
+        return [];
+    }
+
+    let p0 = 0;
+    let p2 = nums.length - 1;
+    let i = 0;
+    while (i <= p2) {
+         if (nums[i] === 0) {
+            [nums[i], nums[p0]] = [nums[p0], nums[i]];
+            p0++;
+            // 左边都检查过了 不是0就是1 所以可以安全++
+            i++;
+        } else if (nums[i] === 2) {
+            [nums[i], nums[p2]] = [nums[p2], nums[i]];
+            p2--;
+            // 这里为什么i++ 因为不知道换过来的是几 所以还要下一轮检查一下 
+        } else {
+            i++;
+        }
+    }
+}
+
+//leetcode 314. Binary Tree Vertical Order Traversal
+var verticalOrder = function(root) {
+    if (root === null) {
+        return [];
+    }
+
+    const map = new Map();
+    let left = 0;
+    let right = 0;
+    const result = [];
+    const queue = [[root, 0]];
+    while (queue.length > 0) {
+        const [node, col] = queue.shift();
+        if (map.has(col)) {
+            map.get(col).push(node.val);
+        } else {
+            map.set(col, [node.val]);
+        }
+        if (node.left) {
+            queue.push([node.left, col - 1]);
+            left = Math.min(col - 1, left);
+        }
+        if (node.right) {
+            queue.push([node.right, col + 1]);
+            right = Math.max(col + 1, right);
+        }
+    }
+    for (let i = left; i <= right; i++) {
+        if (map.get(i)) {
+            result.push(map.get(i));
+        }
+    }
+    return result;
+};
+
+
 const useState = defaultValue => {
     const value = useRef(defaultValue);
     
